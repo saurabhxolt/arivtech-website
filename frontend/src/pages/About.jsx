@@ -7,25 +7,29 @@ import { useAdminAuth } from '../context/AdminAuthContext';
 import { EditableText, EditableArea } from '../components/admin/Editable';
 
 const getCropStyle = (avatarUrl) => {
-  if (!avatarUrl) return {};
+  const baseStyle = { objectPosition: 'center 20%' };
+  if (!avatarUrl) return baseStyle;
   try {
     const hash = avatarUrl.split('#')[1];
-    if (!hash) return {};
+    if (!hash) return baseStyle;
     const params = new URLSearchParams(hash);
     const scale = params.get('scale') || '1';
     const x = params.get('x') || '0';
     const y = params.get('y') || '0';
     return {
       transform: `scale(${scale}) translate(${x}%, ${y}%)`,
-      transformOrigin: 'center center'
+      transformOrigin: 'center center',
+      objectPosition: 'center 20%'
     };
   } catch {
-    return {};
+    return baseStyle;
   }
 };
 
 const getCleanUrl = (avatarUrl) => {
-  if (!avatarUrl) return 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80';
+  if (!avatarUrl || typeof avatarUrl !== 'string' || avatarUrl.trim() === '') {
+    return 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80';
+  }
   return avatarUrl.split('#')[0];
 };
 
@@ -196,7 +200,7 @@ export default function About() {
                   <h3 className="font-display font-bold text-lg text-slate-900 dark:text-white w-full">
                     <EditableText path={`values[${idx}].title`}>{v.title}</EditableText>
                   </h3>
-                  <div className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed w-full">
+                  <div className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed w-full">
                     <EditableArea path={`values[${idx}].desc`}>{v.desc}</EditableArea>
                   </div>
                 </div>
@@ -256,6 +260,10 @@ export default function About() {
                       alt={leader.name}
                       className="w-full h-full object-cover select-none pointer-events-none"
                       style={getCropStyle(leader.avatar)}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80';
+                      }}
                     />
                   </div>
                   {isEditMode && (
@@ -412,13 +420,14 @@ export default function About() {
                 className="w-full h-full object-cover select-none pointer-events-none"
                 style={{
                   transform: `scale(${cropScale}) translate(${cropX}%, ${cropY}%)`,
-                  transformOrigin: 'center center'
+                  transformOrigin: 'center center',
+                  objectPosition: 'center 20%'
                 }}
               />
             </div>
 
             {/* Sliders */}
-            <div className="w-full space-y-4 mb-6">
+            <div className="w-full space-y-4 mb-4">
               <div className="flex flex-col">
                 <div className="flex justify-between text-xs text-slate-500 mb-1">
                   <span>Zoom / Scale</span>
@@ -426,8 +435,8 @@ export default function About() {
                 </div>
                 <input
                   type="range"
-                  min="1.0"
-                  max="3.0"
+                  min="0.8"
+                  max="4.0"
                   step="0.1"
                   value={cropScale}
                   onChange={(e) => setCropScale(parseFloat(e.target.value))}
@@ -437,13 +446,13 @@ export default function About() {
 
               <div className="flex flex-col">
                 <div className="flex justify-between text-xs text-slate-500 mb-1">
-                  <span>Horizontal Offset (X)</span>
+                  <span>Horizontal Position (X)</span>
                   <span>{cropX}%</span>
                 </div>
                 <input
                   type="range"
-                  min="-50"
-                  max="50"
+                  min="-100"
+                  max="100"
                   step="1"
                   value={cropX}
                   onChange={(e) => setCropX(parseInt(e.target.value))}
@@ -453,19 +462,37 @@ export default function About() {
 
               <div className="flex flex-col">
                 <div className="flex justify-between text-xs text-slate-500 mb-1">
-                  <span>Vertical Offset (Y)</span>
+                  <span>Vertical Position (Y)</span>
                   <span>{cropY}%</span>
                 </div>
                 <input
                   type="range"
-                  min="-50"
-                  max="50"
+                  min="-100"
+                  max="100"
                   step="1"
                   value={cropY}
                   onChange={(e) => setCropY(parseInt(e.target.value))}
                   className="w-full accent-amber-500 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer"
                 />
               </div>
+            </div>
+
+            {/* Quick Position Presets */}
+            <div className="flex items-center gap-2 mb-4 w-full">
+              <button
+                type="button"
+                onClick={() => { setCropScale(1.4); setCropY(-25); setCropX(0); }}
+                className="flex-1 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Center Face ⬆️
+              </button>
+              <button
+                type="button"
+                onClick={() => { setCropScale(1.0); setCropY(0); setCropX(0); }}
+                className="flex-1 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Reset 🔄
+              </button>
             </div>
             {/* Tip text */}
             <p className="text-[10px] text-center text-slate-400 dark:text-slate-500 mb-6 max-w-xs leading-normal">
